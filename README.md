@@ -6,8 +6,8 @@ tsc && node dist/account.js
 
 ### Expected Output
 
-```account1 address HexString {
-
+```
+account1 address HexString {
 hexString: '0xed882deba90216c6cf8cacd1d61eaebe9f32ed30423cdfb8de464bb21a5f588b'
 }
 account1 coins: 5000. Should be 5000!
