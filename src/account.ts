@@ -32,28 +32,40 @@ const {
 
   // Generates key pair for a new account
   const account1 = new AptosAccount();
+  // To get the secret key of account 1
+  //   let secret1 = Buffer.from(account1.signingKey.secretKey)
+  //     .toString("hex")
+  //     .slice(0, 64);
+  //   console.log(secret1);
   console.log("account1 address", account1.address());
   // Creates the account on Aptos chain and fund the account with 5000 AptosCoin
   await faucetClient.fundAccount(account1.address(), 5000);
+
+  // Each address have modules (move smart contract code) and resourses (tokens, NFTs)
+  // Get the resources of account 1
   let resources = await client.getAccountResources(account1.address());
+  // Find Aptos coin resourse
   let accountResource = resources.find(
     (r) => r.type === "0x1::coin::CoinStore<0x1::aptos_coin::AptosCoin>"
   );
   let balance = parseInt((accountResource?.data as any).coin.value);
   assert(balance === 5000);
   console.log(`account1 coins: ${balance}. Should be 5000!`);
-
+  // Creates the second account
   const account2 = new AptosAccount();
+  // Prints the address of second account
   console.log("account2 address", account2.address());
-  // Creates the second account and fund the account with 0 AptosCoin
+  // Fund the second account with 0 AptosCoin
   await faucetClient.fundAccount(account2.address(), 0);
+  // Get the resources of account 2
   resources = await client.getAccountResources(account2.address());
+  // Find Aptos coin resourse
   accountResource = resources.find(
     (r) => r.type === "0x1::coin::CoinStore<0x1::aptos_coin::AptosCoin>"
   );
   balance = parseInt((accountResource?.data as any).coin.value);
   assert(balance === 0);
-  console.log(`account2 coins: ${balance}. Should be 4210!`);
+  console.log(`account2 coins: ${balance}. Should be 0!`);
 
   const token = new TypeTagStruct(
     StructTag.fromString("0x1::aptos_coin::AptosCoin")
@@ -76,7 +88,7 @@ const {
       ]
     )
   );
-
+  // Get the sequence number from account 1 && Get chain ID
   const [{ sequence_number: sequenceNumber }, chainId] = await Promise.all([
     client.getAccount(account1.address()),
     client.getChainId(),
@@ -100,17 +112,21 @@ const {
 
   // Sign the raw transaction with account1's private key
   const bcsTxn = AptosClient.generateBCSTransaction(account1, rawTxn);
-
+  // Submit the signed Transaction
   const transactionRes = await client.submitSignedBCSTransaction(bcsTxn);
-
+  // Wait for the transaction to complete
   await client.waitForTransaction(transactionRes.hash);
+
+  // Get balance of account 2
   resources = await client.getAccountResources(account1.address());
   accountResource = resources.find(
     (r) => r.type === "0x1::coin::CoinStore<0x1::aptos_coin::AptosCoin>"
   );
   balance = parseInt((accountResource?.data as any).coin.value);
-  //   assert(balance === 717);
-  console.log(`account1 coins: ${balance}. Should be ?!`);
+  assert(balance === 4210);
+  console.log(`account1 coins: ${balance}. Should be 4210!`);
+
+  // Get balance of account 2
   resources = await client.getAccountResources(account2.address());
   accountResource = resources.find(
     (r) => r.type === "0x1::coin::CoinStore<0x1::aptos_coin::AptosCoin>"
